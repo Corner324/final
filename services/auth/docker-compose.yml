@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  auth-app:
+    build: .
+    container_name: auth-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+    env_file:
+      - .env
+    depends_on:
+      - auth-db
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./:/app
+    restart: always
+    networks:
+      - auth-net
+
+  auth-db:
+    image: postgres:15-alpine
+    container_name: auth-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - auth-net
+
+volumes:
+  auth-db-data:
+
+networks:
+  auth-net:
+    driver: bridge 
