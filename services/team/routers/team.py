@@ -11,11 +11,7 @@ from crud.team import (
     delete_team,
 )
 from typing import List
-
-
-# Заглушка для Depends
-async def get_db():
-    pass
+from deps.db import get_db
 
 
 router = APIRouter(prefix="/teams", tags=["teams"])

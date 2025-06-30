@@ -16,9 +16,11 @@ SQLAlchemy = "^2.0.29"
 alembic = "^1.13.1"
 python-jose = "^3.3.0"
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+bcrypt = "4.0.1"
 loguru = "^0.7.2"
 email-validator = "^2.1.0"
 python-multipart = "^0.0.9"
+psycopg2-binary = "^2.9.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"

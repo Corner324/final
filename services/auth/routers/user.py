@@ -15,7 +15,7 @@ async def register_user(user_in: UserCreate, db: AsyncSession = Depends(get_db))
     if user_in.team_code:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
-                f"http://team:8002/teams/by-code/{user_in.team_code}"
+                f"http://team:8000/teams/by-code/{user_in.team_code}"
             )
             if resp.status_code == 200:
                 team = resp.json()
