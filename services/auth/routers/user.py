@@ -1,24 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from crud.user import create_user, update_user, delete_user, get_user_by_email
-from crud.team import get_team_by_code
 from deps.db import get_db
 from deps.user import get_current_user
 from schemas.user import UserCreate, UserUpdate, UserOut
+import httpx
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def register_user(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
-    if await get_user_by_email(db, user_in.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
-    team = None
+    team_id = None
     if user_in.team_code:
-        team = await get_team_by_code(db, user_in.team_code)
-        if not team:
-            raise HTTPException(status_code=400, detail="Invalid team code")
-    user = await create_user(db, user_in, team)
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"http://team:8002/teams/by-code/{user_in.team_code}"
+            )
+            if resp.status_code == 200:
+                team = resp.json()
+                team_id = team["id"]
+            else:
+                raise HTTPException(status_code=400, detail="Некорректный код команды")
+    user = await create_user(db, user_in, team_id=team_id)
     return UserOut.model_validate(user)
 
 

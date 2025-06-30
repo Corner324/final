@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  auth:
+    build: ./services/auth
+    container_name: auth-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+    env_file:
+      - ./services/auth/.env
+    depends_on:
+      - auth-db
+    ports:
+      - "${AUTH_PORT}:8000"
+    volumes:
+      - ./services/auth:/app
+    networks:
+      - main-net
+
+  auth-db:
+    image: postgres:15-alpine
+    container_name: auth-db
+    restart: always
+    env_file:
+      - ./services/auth/.env
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - main-net
+
+  team:
+    build: ./services/team
+    container_name: team-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+    env_file:
+      - ./services/team/.env
+    depends_on:
+      - team-db
+    ports:
+      - "${TEAM_PORT}:8000"
+    volumes:
+      - ./services/team:/app
+    networks:
+      - main-net
+
+  team-db:
+    image: postgres:15-alpine
+    container_name: team-db
+    restart: always
+    env_file:
+      - ./services/team/.env
+    volumes:
+      - team-db-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - main-net
+
+volumes:
+  auth-db-data:
+  team-db-data:
+
+networks:
+  main-net:
+    driver: bridge

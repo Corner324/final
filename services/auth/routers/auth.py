@@ -5,7 +5,7 @@ from crud.user import get_user_by_email
 from core.security import verify_password, create_access_token
 from deps.db import get_db
 from deps.user import get_current_user
-from schemas.user import UserLogin, UserOut
+from schemas.user import UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -19,7 +19,7 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
-        )       
+        )
     if user.status != "active":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="User is not active"

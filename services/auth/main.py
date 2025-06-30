@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from starlette.middleware.cors import CORSMiddleware
 import os
 from routers import user, auth
+from routers import admin
 from models.user import User
-from models.team import Team
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -23,6 +23,7 @@ app.add_middleware(
 
 app.include_router(user.router)
 app.include_router(auth.router)
+app.include_router(admin.router)
 
 
 @app.on_event("startup")

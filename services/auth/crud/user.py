@@ -2,7 +2,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 from models.user import User, UserStatus, UserRole
-from models.team import Team
 from schemas.user import UserCreate, UserUpdate
 from core.security import hash_password
 from sqlalchemy import update, delete
@@ -19,13 +18,13 @@ async def get_user_by_id(db: AsyncSession, user_id: int) -> User | None:
 
 
 async def create_user(
-    db: AsyncSession, user_in: UserCreate, team: Team | None = None
+    db: AsyncSession, user_in: UserCreate, team_id: int | None = None
 ) -> User:
     db_user = User(
         email=user_in.email,
         hashed_password=hash_password(user_in.password),
         full_name=user_in.full_name,
-        team_id=team.id if team else None,
+        team_id=team_id,
     )
     db.add(db_user)
     try:
@@ -50,3 +49,21 @@ async def update_user(db: AsyncSession, db_user: User, user_in: UserUpdate) -> U
 async def delete_user(db: AsyncSession, db_user: User) -> None:
     await db.delete(db_user)
     await db.commit()
+
+
+async def admin_update_user_fields(
+    db: AsyncSession,
+    user: User,
+    status: UserStatus | None = None,
+    role: UserRole | None = None,
+    team_id: int | None = None,
+) -> User:
+    if status is not None:
+        user.status = status
+    if role is not None:
+        user.role = role
+    if team_id is not None or team_id is None:
+        user.team_id = team_id
+    await db.commit()
+    await db.refresh(user)
+    return user

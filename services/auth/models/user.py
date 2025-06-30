@@ -15,8 +15,6 @@ class UserRole(str, enum.Enum):
     superadmin = "superadmin"
 
 
-from .team import Team
-
 Base = declarative_base()
 
 
@@ -28,8 +26,8 @@ class User(Base):
     full_name = Column(String, nullable=True)
     status = Column(Enum(UserStatus), default=UserStatus.active, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.user, nullable=False)
-    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team_id = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    team = relationship("Team", back_populates="users")
+    # team = relationship("Team", back_populates="users")
