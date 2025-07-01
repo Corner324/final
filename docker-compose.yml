@@ -57,9 +57,164 @@ services:
     networks:
       - main-net
 
+  org-structure:
+    build: ./services/org_structure
+    container_name: org-structure-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    env_file:
+      - ./services/org_structure/.env
+    depends_on:
+      - org-structure-db
+    ports:
+      - "${ORG_STRUCTURE_PORT}:8000"
+    volumes:
+      - ./services/org_structure:/app
+    networks:
+      - main-net
+
+  org-structure-db:
+    image: postgres:15-alpine
+    container_name: org-structure-db
+    restart: always
+    environment:
+      POSTGRES_DB: org_structure
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - org-structure-db-data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    networks:
+      - main-net
+
+  tasks:
+    build: ./services/tasks
+    container_name: tasks-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    env_file:
+      - ./services/tasks/.env
+    depends_on:
+      - tasks-db
+    ports:
+      - "${TASKS_PORT}:8000"
+    volumes:
+      - ./services/tasks:/app
+    networks:
+      - main-net
+
+  tasks-db:
+    image: postgres:15-alpine
+    container_name: tasks-db
+    restart: always
+    environment:
+      POSTGRES_DB: tasks
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - tasks-db-data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+    networks:
+      - main-net
+
+  motivation:
+    build: ./services/motivation
+    container_name: motivation-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    env_file:
+      - ./services/motivation/.env
+    depends_on:
+      - motivation-db
+    ports:
+      - "${MOTIVATION_PORT}:8000"
+    volumes:
+      - ./services/motivation:/app
+    networks:
+      - main-net
+
+  motivation-db:
+    image: postgres:15-alpine
+    container_name: motivation-db
+    restart: always
+    environment:
+      POSTGRES_DB: motivation
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - motivation-db-data:/var/lib/postgresql/data
+    ports:
+      - "5437:5432"
+    networks:
+      - main-net
+
+  meetings:
+    build: ./services/meetings
+    container_name: meetings-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    env_file:
+      - ./services/meetings/.env
+    depends_on:
+      - meetings-db
+    ports:
+      - "${MEETINGS_PORT}:8000"
+    volumes:
+      - ./services/meetings:/app
+    networks:
+      - main-net
+
+  meetings-db:
+    image: postgres:15-alpine
+    container_name: meetings-db
+    restart: always
+    environment:
+      POSTGRES_DB: meetings
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - meetings-db-data:/var/lib/postgresql/data
+    ports:
+      - "5438:5432"
+    networks:
+      - main-net
+
+  calendar:
+    build: ./services/calendar
+    container_name: calendar-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    env_file:
+      - ./services/calendar/.env
+    depends_on:
+      - calendar-db
+    ports:
+      - "${CALENDAR_PORT}:8000"
+    volumes:
+      - ./services/calendar:/app
+    networks:
+      - main-net
+
+  calendar-db:
+    image: postgres:15-alpine
+    container_name: calendar-db
+    restart: always
+    environment:
+      POSTGRES_DB: calendar
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - calendar-db-data:/var/lib/postgresql/data
+    ports:
+      - "5439:5432"
+    networks:
+      - main-net
+
 volumes:
   auth-db-data:
   team-db-data:
+  org-structure-db-data:
+  tasks-db-data:
+  motivation-db-data:
+  meetings-db-data:
+  calendar-db-data:
 
 networks:
   main-net:
