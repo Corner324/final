@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_password: str
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 @lru_cache

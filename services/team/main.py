@@ -1,9 +1,10 @@
 from fastapi import FastAPI
-from routers import team
+from routers import routers
 
 app = FastAPI()
 
-app.include_router(team.router)
+for router in routers:
+    app.include_router(router)
 
 
 # Заглушка для запуска
