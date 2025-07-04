@@ -1,2 +1,3 @@
-from .team import Team, Base
+from .team import Team
 from .user import User
+from .news import News

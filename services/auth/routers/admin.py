@@ -43,3 +43,37 @@ async def change_user_role(
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     user = await admin_update_user_fields(db, user, role=role_in)
     return UserOut.model_validate(user)
+
+
+# ---------------------------------------------------------------------------
+# Добавление / удаление пользователя в команду (company)
+# Только администратор своей команды или superadmin
+# ---------------------------------------------------------------------------
+
+
+@router.put("/users/{user_id}/team/{team_id}", response_model=UserOut)
+async def change_user_team(
+    user_id: int,
+    team_id: int | None,  # None – удалить из команды
+    db: AsyncSession = Depends(get_db),
+    current_user: UserOut = Depends(is_admin),
+):
+    # Проверяем права: admin может управлять только своей командой
+    if current_user.role == UserRole.admin and current_user.team_id != team_id:
+        raise HTTPException(status_code=403, detail="Нельзя назначать в другую команду")
+
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    # Superadmin может перемещать свободно. Admin своей команды – только в/из своей команды
+    if current_user.role == UserRole.admin and user.team_id not in (
+        None,
+        current_user.team_id,
+    ):
+        raise HTTPException(
+            status_code=403, detail="Недостаточно прав для перемещения пользователя"
+        )
+
+    user = await admin_update_user_fields(db, user, team_id=team_id)
+    return UserOut.model_validate(user)

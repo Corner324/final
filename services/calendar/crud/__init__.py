@@ -17,10 +17,15 @@ async def get_event(db: AsyncSession, event_id: int) -> CalendarEvent | None:
     return result.scalar_one_or_none()
 
 
-async def get_all_events(db: AsyncSession) -> list[CalendarEvent]:
-    result = await db.execute(
-        select(CalendarEvent).order_by(CalendarEvent.start_time.desc())
-    )
+async def get_all_events(
+    db: AsyncSession, user_id: int | None = None
+) -> list[CalendarEvent]:
+    stmt = select(CalendarEvent).order_by(CalendarEvent.start_time.desc())
+    if user_id is not None:
+        stmt = stmt.where(
+            (CalendarEvent.owner_id == user_id) | (CalendarEvent.is_team_event == 1)
+        )
+    result = await db.execute(stmt)
     return result.scalars().all()
 
 

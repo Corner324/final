@@ -8,6 +8,8 @@ class CalendarEventBase(BaseModel):
     description: Optional[str] = None
     start_time: datetime
     end_time: datetime
+    owner_id: int
+    is_team_event: bool = False
 
 
 class CalendarEventCreate(CalendarEventBase):

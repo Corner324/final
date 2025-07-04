@@ -69,23 +69,44 @@ class UserAdmin(ModelView, model=User):
         "updated_at",
     ]
 
-    # Дополнительное поле «пароль» (plain-text) для формы создания/редактирования
-    form_extra_fields = {"password": PasswordField("Password")}
+    async def scaffold_form(self) -> type:
+        """Создает форму с дополнительным полем пароля."""
+        form_class = await super().scaffold_form()
+
+        # Добавляем поле пароля
+        form_class.password = PasswordField("Password")
+
+        return form_class
 
     page_size = 50
     name = "User"
     name_plural = "Users"
 
-    def on_model_change(self, form, model, is_created):  # type: ignore[override]
+    async def on_model_change(self, form, model, is_created, request):  # type: ignore[override]
         """Хэшируем пароль при создании/обновлении пользователя."""
 
-        password: str | None = form.password.data if hasattr(form, "password") else None  # type: ignore[attr-defined]
-        if password:
-            model.hashed_password = _hash_password(password)
+        # form - это словарь, а не объект WTForms!
+        print(f"DEBUG: form type: {type(form)}")
+        print(f"DEBUG: form content: {form}")
 
-        # При создании не забываем выставить роль по-умолчанию
-        if is_created and model.role is None:
-            model.role = "user"
+        # Получаем пароль из словаря
+        password: str | None = form.get("password") if isinstance(form, dict) else None
+
+        print(f"DEBUG: extracted password: {password}")
+        print(f"DEBUG: is_created: {is_created}")
+
+        # При создании пароль обязателен
+        if is_created:
+            if not password:
+                raise ValueError("Пароль обязателен при создании пользователя")
+            model.hashed_password = _hash_password(password)
+            # Выставляем роль по-умолчанию
+            if model.role is None:
+                model.role = "user"
+        else:
+            # При редактировании пароль опционален
+            if password:
+                model.hashed_password = _hash_password(password)
 
 
 # Регистрируем модели в админке

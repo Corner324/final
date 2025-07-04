@@ -11,6 +11,8 @@ class CalendarEvent(Base):
     description = Column(Text, nullable=True)
     start_time = Column(DateTime(timezone=True), nullable=False)
     end_time = Column(DateTime(timezone=True), nullable=False)
+    owner_id = Column(Integer, nullable=False)
+    is_team_event = Column(Integer, default=0, nullable=False)  # 0/1 bool
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
