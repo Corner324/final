@@ -7,7 +7,7 @@ from crud.user import get_user_by_id
 from deps.db import get_db
 from schemas.user import UserOut
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login-form")
 
 
 async def get_current_user(

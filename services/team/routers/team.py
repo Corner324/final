@@ -19,7 +19,10 @@ router = APIRouter(prefix="/teams", tags=["teams"])
 
 @router.post("/", response_model=TeamOut, status_code=status.HTTP_201_CREATED)
 async def create_team_view(team_in: TeamCreate, db: AsyncSession = Depends(get_db)):
-    team = await create_team(db, team_in)
+    try:
+        team = await create_team(db, team_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return TeamOut.model_validate(team)
 
 

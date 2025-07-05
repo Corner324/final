@@ -18,8 +18,7 @@ class UserStatus(str, enum.Enum):
     """Статусы пользователей."""
 
     active = "active"
-    invited = "invited"
-    blocked = "blocked"
+    inactive = "inactive"
     deleted = "deleted"
 
 
@@ -28,6 +27,7 @@ class UserRole(str, enum.Enum):
 
     user = "user"
     admin = "admin"
+    superadmin = "superadmin"
 
 
 class Team(Base):
@@ -56,8 +56,6 @@ class User(Base):
     status = Column(Enum(UserStatus), default=UserStatus.active, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.user, nullable=False)
     team_id: int | None = Column(Integer, ForeignKey("teams.id"), nullable=True)
-    is_active: bool = Column(Boolean, default=True)
-    is_admin: bool = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

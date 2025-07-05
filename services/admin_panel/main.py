@@ -2,6 +2,9 @@ import os
 
 from fastapi import FastAPI
 from sqladmin import Admin, ModelView
+from sqladmin.authentication import AuthenticationBackend
+from starlette.requests import Request
+from starlette.authentication import AuthCredentials, SimpleUser
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from wtforms import PasswordField
@@ -26,11 +29,74 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base.metadata.create_all(bind=engine)
 
 # ---------------------------------------------------------------------------
+# Basic HTTP Auth для входа в админ-панель
+# ---------------------------------------------------------------------------
+
+
+class BasicAuthBackend(AuthenticationBackend):
+    """Простейшая Basic-auth аутентификация."""
+
+    def __init__(self) -> None:
+        # SQLAdmin требует секрет для подписи cookie сессии
+        secret = os.getenv("ADMIN_SECRET_KEY", "change-me-please")
+        super().__init__(secret_key=secret)
+
+    async def authenticate(self, request: Request):  # type: ignore[override]
+        import base64, os
+
+        # 1. Проверяем сессию (устанавливается методом login)
+        if user := request.session.get("user"):
+            return AuthCredentials(["authenticated"]), SimpleUser(user)
+
+        # 2. Fallback: Basic-Auth заголовок (подходит для API-клиентов)
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            return None
+
+        scheme, _, credentials = auth_header.partition(" ")
+        if scheme.lower() != "basic" or not credentials:
+            return None
+
+        try:
+            username, _, password = (
+                base64.b64decode(credentials).decode().partition(":")
+            )
+        except Exception:
+            return None
+
+        if username == os.getenv("ADMIN_USER") and password == os.getenv("ADMIN_PASS"):
+            return AuthCredentials(["authenticated"]), SimpleUser(username)
+        return None
+
+    async def login(self, request: Request):  # type: ignore[override]
+        """Обработка формы /admin/login. Проверяем username/password."""
+
+        form = await request.form()
+        username = form.get("username") if form else None
+        password = form.get("password") if form else None
+        if username == os.getenv("ADMIN_USER") and password == os.getenv("ADMIN_PASS"):
+            request.session.update({"user": username})
+            return True
+        return False
+
+    async def logout(self, request: Request):  # type: ignore[override]
+        """Очищаем сессию (SQLAdmin делает это сам)."""
+
+        request.session.pop("user", None)
+        return True
+
+
+# ---------------------------------------------------------------------------
 # Приложение FastAPI + SQLAdmin
 # ---------------------------------------------------------------------------
 
 app = FastAPI(title="Admin Panel Service")
-admin = Admin(app, engine, session_maker=SessionLocal)
+admin = Admin(
+    app,
+    engine,
+    session_maker=SessionLocal,
+    authentication_backend=BasicAuthBackend(),
+)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -56,7 +122,6 @@ class UserAdmin(ModelView, model=User):
         User.full_name,
         User.role,
         User.status,
-        User.is_active,
         User.team_id,
         User.created_at,
     ]
@@ -64,7 +129,6 @@ class UserAdmin(ModelView, model=User):
     # Поля, которые НЕ показываем в форме
     form_excluded_columns = [
         "hashed_password",
-        "is_admin",
         "created_at",
         "updated_at",
     ]

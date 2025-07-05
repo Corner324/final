@@ -38,6 +38,9 @@ class UserUpdate(BaseModel):
 class UserOut(UserBase):
     id: int
 
+    class Config:
+        from_attributes = True
+
 
 class UserInDB(UserBase):
     id: int

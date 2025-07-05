@@ -7,6 +7,10 @@ from typing import List
 
 
 async def create_team(db: AsyncSession, team_in: TeamCreate) -> Team:
+    existing = await get_team_by_code(db, team_in.code)
+    if existing:
+        raise ValueError("Команда с таким кодом уже существует")
+
     db_team = Team(name=team_in.name, code=team_in.code)
     db.add(db_team)
     try:
@@ -14,7 +18,7 @@ async def create_team(db: AsyncSession, team_in: TeamCreate) -> Team:
         await db.refresh(db_team)
     except IntegrityError:
         await db.rollback()
-        raise
+        raise ValueError("Команда с таким кодом уже существует")
     return db_team
 
 

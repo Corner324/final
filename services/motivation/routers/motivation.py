@@ -8,8 +8,46 @@ from crud import (
     delete_motivation,
 )
 from deps.db import get_db
+from crud.rating import (
+    create_rating,
+    get_user_ratings,
+    get_team_average,
+    get_user_average,
+)
+from schemas import (
+    RatingCreate,
+    RatingRead,
+    UserMatrixResponse,
+    TeamAverageResponse,
+)
 
 router = APIRouter(prefix="/motivation", tags=["motivation"])
+
+
+# ---------------------------------------------------------------------------
+# Ratings CRUD
+# ---------------------------------------------------------------------------
+
+
+@router.post("/ratings", response_model=RatingRead, status_code=status.HTTP_201_CREATED)
+async def add_rating(data: RatingCreate, db: AsyncSession = Depends(get_db)):
+    return await create_rating(db, data)
+
+
+@router.get("/users/{user_id}/matrix", response_model=UserMatrixResponse)
+async def user_matrix(user_id: int, db: AsyncSession = Depends(get_db)):
+    ratings = await get_user_ratings(db, user_id)
+    avg_quarter = await get_user_average(db, user_id, period_days=90)
+    avg_all = await get_user_average(db, user_id, period_days=None)
+    return UserMatrixResponse(
+        ratings=ratings, average_quarter=avg_quarter, average_all=avg_all
+    )
+
+
+@router.get("/teams/{team_id}/average", response_model=TeamAverageResponse)
+async def team_average(team_id: int, db: AsyncSession = Depends(get_db)):
+    avg = await get_team_average(db, team_id, period_days=90)
+    return TeamAverageResponse(team_id=team_id, average=avg)
 
 
 @router.get("/", response_model=list[MotivationRead])

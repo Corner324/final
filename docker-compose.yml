@@ -4,7 +4,7 @@ services:
   auth:
     build: ./services/auth
     container_name: auth-app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
     env_file:
       - ./services/auth/.env
     depends_on:
@@ -123,11 +123,6 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
     env_file:
       - ./services/motivation/.env
-    # depends_on:
-    #   rabbitmq:
-    #     condition: service_healthy
-    #   motivation-db:
-    #     condition: service_started
     ports:
       - "${MOTIVATION_PORT}:8000"
     volumes:
@@ -227,13 +222,38 @@ services:
     build: ./services/admin_panel
     container_name: admin-panel-app
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
-    # SQLite используется по умолчанию, поэтому отдельная БД не нужна
     ports:
       - "${ADMIN_PANEL_PORT:-8010}:8000"
     volumes:
       - ./services/admin_panel:/app
     networks:
       - main-net
+    env_file:
+      - ./services/admin_panel/db.env
+    depends_on:
+      admin-panel-db:
+        condition: service_healthy
+    restart: always
+
+  admin-panel-db:
+    image: postgres:15-alpine
+    container_name: admin-panel-db
+    restart: always
+    environment:
+      POSTGRES_DB: admin_panel
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - admin-panel-db-data:/var/lib/postgresql/data
+    ports:
+      - "5440:5432"
+    networks:
+      - main-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   auth-db-data:
@@ -243,6 +263,7 @@ volumes:
   motivation-db-data:
   meetings-db-data:
   calendar-db-data:
+  admin-panel-db-data:
 
 networks:
   main-net:

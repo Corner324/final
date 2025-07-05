@@ -22,7 +22,10 @@ async def register_user(user_in: UserCreate, db: AsyncSession = Depends(get_db))
                 team_id = team["id"]
             else:
                 raise HTTPException(status_code=400, detail="Некорректный код команды")
-    user = await create_user(db, user_in, team_id=team_id)
+    try:
+        user = await create_user(db, user_in, team_id=team_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return UserOut.model_validate(user)
 
 

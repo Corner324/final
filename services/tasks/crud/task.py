@@ -79,7 +79,34 @@ async def update_task(db: AsyncSession, task_id: int, data: TaskUpdate) -> Task 
     obj = await get_task(db, task_id)
     if not obj:
         return None
-    for k, v in data.model_dump(exclude_unset=True).items():
+
+    payload = data.model_dump(exclude_unset=True)
+
+    # Проверяем due_date, если он изменяется
+    if "due_date" in payload and payload["due_date"] is not None:
+        new_due = payload["due_date"]
+
+        # Если assignee тоже меняется, берём его, иначе текущий
+        target_user = payload.get("assignee_id", obj.assignee_id)
+
+        import httpx
+
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.post(
+                    "http://calendar:8000/calendar/availability",
+                    json={
+                        "start_time": new_due.isoformat(),
+                        "end_time": new_due.isoformat(),
+                        "user_id": target_user,
+                    },
+                )
+                if resp.status_code == 200 and resp.json().get("available") is False:
+                    raise ValueError("Due date conflicts with calendar event")
+        except httpx.HTTPError:
+            pass
+
+    for k, v in payload.items():
         setattr(obj, k, v)
     await db.commit()
     await db.refresh(obj)

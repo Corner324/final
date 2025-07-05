@@ -20,6 +20,11 @@ async def get_user_by_id(db: AsyncSession, user_id: int) -> User | None:
 async def create_user(
     db: AsyncSession, user_in: UserCreate, team_id: int | None = None
 ) -> User:
+    # Проверяем наличие пользователя заранее
+    existing = await get_user_by_email(db, user_in.email)
+    if existing:
+        raise ValueError("Пользователь с таким email уже существует")
+
     db_user = User(
         email=user_in.email,
         hashed_password=hash_password(user_in.password),
@@ -32,7 +37,7 @@ async def create_user(
         await db.refresh(db_user)
     except IntegrityError:
         await db.rollback()
-        raise
+        raise ValueError("Пользователь с таким email уже существует")
     return db_user
 
 
