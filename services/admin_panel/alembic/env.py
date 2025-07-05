@@ -4,9 +4,6 @@ from logging.config import fileConfig
 from sqlalchemy import pool, create_engine
 from alembic import context
 
-# Явно указываем script_location для Alembic
-context.config.set_main_option("script_location", os.path.dirname(__file__))
-
 # Автоматически подгружаем переменные из .env
 from dotenv import load_dotenv
 
@@ -14,46 +11,27 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 # Добавляем корень микросервиса в PYTHONPATH для корректного импорта models
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# Универсальный импорт Base (на случай увеличения числа моделей)
-from glob import glob
-from importlib import import_module
+from models import Base
 
-# Собираем все Base из models
-base_list = []
-init_model_file = os.path.join(os.path.dirname(__file__), "..", "models", "__init__.py")
-if os.path.exists(init_model_file):
-    try:
-        mod = import_module("models")
-        if hasattr(mod, "Base"):
-            base_list.append(getattr(mod, "Base"))
-    except Exception:
-        pass
+# Явно указываем script_location для Alembic
+context.config.set_main_option("script_location", os.path.dirname(__file__))
 
-models_path = os.path.join(os.path.dirname(__file__), "..", "models", "*.py")
-for model_file in glob(models_path):
-    module_name = f"models.{os.path.splitext(os.path.basename(model_file))[0]}"
-    if module_name.endswith("__init__"):
-        continue
-    try:
-        mod = import_module(module_name)
-        if hasattr(mod, "Base"):
-            base_list.append(getattr(mod, "Base"))
-    except Exception:
-        pass
-
-if not base_list:
-    raise RuntimeError("Не найден ни один Base в models! Проверьте структуру моделей.")
-
-target_metadata = base_list[0].metadata
-
-ASYNC_DATABASE_URL = os.environ.get("DATABASE_URL")
+# Берём URL из переменной ADMIN_DATABASE_URL либо DATABASE_URL
+ASYNC_DATABASE_URL = os.environ.get("ADMIN_DATABASE_URL") or os.environ.get(
+    "DATABASE_URL"
+)
 if not ASYNC_DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is not set in environment variables!")
+    raise RuntimeError(
+        "ADMIN_DATABASE_URL (или DATABASE_URL) не задана в переменных окружения!"
+    )
 # Для миграций используем sync-URL
 SYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("+asyncpg", "+psycopg2")
 
 config = context.config
+# Прописываем URL в конфиг
 config.set_main_option("sqlalchemy.url", str(SYNC_DATABASE_URL))
+
+target_metadata = Base.metadata
 
 
 def run_migrations_offline():

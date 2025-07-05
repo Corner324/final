@@ -8,7 +8,8 @@ services:
     env_file:
       - ./services/auth/.env
     depends_on:
-      - auth-db
+      auth-db:
+        condition: service_healthy
     ports:
       - "${AUTH_PORT}:8000"
     volumes:
@@ -28,6 +29,11 @@ services:
       - "5433:5432"
     networks:
       - main-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   team:
     build: ./services/team
@@ -36,7 +42,8 @@ services:
     env_file:
       - ./services/team/.env
     depends_on:
-      - team-db
+      team-db:
+        condition: service_healthy
     ports:
       - "${TEAM_PORT}:8000"
     volumes:
@@ -56,15 +63,21 @@ services:
       - "5434:5432"
     networks:
       - main-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   org-structure:
     build: ./services/org_structure
     container_name: org-structure-app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    command: bash -c "poetry run alembic upgrade heads && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1"
     env_file:
       - ./services/org_structure/.env
     depends_on:
-      - org-structure-db
+      org-structure-db:
+        condition: service_healthy
     ports:
       - "${ORG_STRUCTURE_PORT}:8000"
     volumes:
@@ -86,15 +99,21 @@ services:
       - "5435:5432"
     networks:
       - main-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   tasks:
     build: ./services/tasks
     container_name: tasks-app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    command: bash -c "poetry run alembic upgrade heads && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1"
     env_file:
       - ./services/tasks/.env
     depends_on:
-      - tasks-db
+      tasks-db:
+        condition: service_healthy
     ports:
       - "${TASKS_PORT}:8000"
     volumes:
@@ -116,13 +135,21 @@ services:
       - "5436:5432"
     networks:
       - main-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   motivation:
     build: ./services/motivation
     container_name: motivation-app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    command: bash -c "poetry run alembic upgrade heads && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1"
     env_file:
       - ./services/motivation/.env
+    depends_on:
+      motivation-db:
+        condition: service_healthy
     ports:
       - "${MOTIVATION_PORT}:8000"
     volumes:
@@ -144,15 +171,21 @@ services:
       - "5437:5432"
     networks:
       - main-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   meetings:
     build: ./services/meetings
     container_name: meetings-app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    command: bash -c "poetry run alembic upgrade heads && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1"
     env_file:
       - ./services/meetings/.env
     depends_on:
-      - meetings-db
+      meetings-db:
+        condition: service_healthy
     ports:
       - "${MEETINGS_PORT}:8000"
     volumes:
@@ -174,15 +207,21 @@ services:
       - "5438:5432"
     networks:
       - main-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   calendar:
     build: ./services/calendar
     container_name: calendar-app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+    command: bash -c "poetry run alembic upgrade heads && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1"
     env_file:
       - ./services/calendar/.env
     depends_on:
-      - calendar-db
+      calendar-db:
+        condition: service_healthy
     ports:
       - "${CALENDAR_PORT}:8000"
     volumes:
@@ -204,6 +243,11 @@ services:
       - "5439:5432"
     networks:
       - main-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management

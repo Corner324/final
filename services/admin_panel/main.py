@@ -122,11 +122,11 @@ class UserAdmin(ModelView, model=User):
         User.full_name,
         User.role,
         User.status,
-        User.team_id,
+        User.team,  # показываем связанную команду
         User.created_at,
     ]
 
-    # Поля, которые НЕ показываем в форме
+    # Exclude hashed password but показываем team
     form_excluded_columns = [
         "hashed_password",
         "created_at",
