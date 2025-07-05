@@ -5,7 +5,8 @@ from functools import lru_cache
 class Settings(BaseSettings):
     database_url: str
     secret_key: str
-    access_token_expire_minutes: int = 30
+    # По умолчанию токен живёт час, чтобы было проще отлаживать клиент
+    access_token_expire_minutes: int = 60
     algorithm: str = "HS256"
     postgres_db: str
     postgres_user: str

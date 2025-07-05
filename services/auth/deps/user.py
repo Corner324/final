@@ -6,6 +6,7 @@ from core.security import decode_access_token
 from crud.user import get_user_by_id
 from deps.db import get_db
 from schemas.user import UserOut
+from typing import Optional
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login-form")
 
@@ -19,7 +20,10 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     payload = decode_access_token(token)
-    user_id: int = payload.get("sub") if payload else None
+    sub_val = payload.get("sub") if payload else None
+    user_id: Optional[int] = (
+        int(sub_val) if isinstance(sub_val, str) and sub_val.isdigit() else None
+    )
     if user_id is None:
         raise credentials_exception
     user = await get_user_by_id(db, user_id)

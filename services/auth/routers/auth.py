@@ -25,7 +25,7 @@ async def login(form_data: LoginForm, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     if user.status != "active":
         raise HTTPException(status_code=403, detail="User is not active")
-    access_token = create_access_token({"sub": user.id})
+    access_token = create_access_token({"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -39,7 +39,7 @@ async def login_form(
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     if user.status != "active":
         raise HTTPException(status_code=403, detail="User is not active")
-    access_token = create_access_token({"sub": user.id})
+    access_token = create_access_token({"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
