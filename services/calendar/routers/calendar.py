@@ -21,9 +21,8 @@ async def create(data: CalendarEventCreate, db: AsyncSession = Depends(get_db)):
     return await create_event(db, data)
 
 
-# ---------------------------------------------------------------------------
 # Slots for a day
-# ---------------------------------------------------------------------------
+
 
 
 @router.get("/slots", response_model=list[CalendarEventRead])

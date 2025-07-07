@@ -21,9 +21,7 @@ ASYNC_DATABASE_URL = os.environ.get("ADMIN_DATABASE_URL") or os.environ.get(
     "DATABASE_URL"
 )
 if not ASYNC_DATABASE_URL:
-    raise RuntimeError(
-        "ADMIN_DATABASE_URL (или DATABASE_URL) не задана в переменных окружения!"
-    )
+    raise RuntimeError("ADMIN_DATABASE_URL не задана в переменных окружения!")
 # Для миграций используем sync-URL
 SYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("+asyncpg", "+psycopg2")
 

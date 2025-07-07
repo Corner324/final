@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, func
 from sqlalchemy.orm import declarative_base
 
-from .team import Base  # reuse existing Base
+from .team import Base
 
 
 class News(Base):

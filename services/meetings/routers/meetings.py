@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-# Absolute imports within service package root
 
 from deps.db import get_db  # type: ignore
 from crud import (
@@ -13,11 +12,6 @@ from crud import (
     delete_meeting,
 )  # type: ignore
 from schemas import MeetingCreate, MeetingUpdate, MeetingOut  # type: ignore
-
-
-# ---------------------------------------------------------------------------
-# Helper
-# ---------------------------------------------------------------------------
 
 
 def _to_out(meeting) -> MeetingOut:
@@ -40,11 +34,6 @@ def _to_out(meeting) -> MeetingOut:
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
 
-# ---------------------------------------------------------------------------
-# CRUD энд-пойнты
-# ---------------------------------------------------------------------------
-
-
 @router.post("/", response_model=MeetingOut, status_code=status.HTTP_201_CREATED)
 async def create(data: MeetingCreate, db: AsyncSession = Depends(get_db)):
     try:
@@ -52,7 +41,7 @@ async def create(data: MeetingCreate, db: AsyncSession = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # гарантируем, что participants загружены, чтобы избежать MissingGreenlet
+    # ensure participants preloaded
     await db.refresh(meeting, attribute_names=["participants"])
     return _to_out(meeting)
 

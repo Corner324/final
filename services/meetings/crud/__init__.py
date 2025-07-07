@@ -11,9 +11,8 @@ from models import Meeting, meeting_participants
 from schemas import MeetingCreate, MeetingUpdate
 
 
-# ---------------------------------------------------------------------------
 # Вспомогательные функции
-# ---------------------------------------------------------------------------
+
 
 
 async def _has_time_conflict(

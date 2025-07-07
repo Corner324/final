@@ -14,11 +14,6 @@ class Motivation(Base):
     )
 
 
-# ---------------------------------------------------------------------------
-# Rating: оценки по задачам
-# ---------------------------------------------------------------------------
-
-
 class Rating(Base):
     """Оценка выполненной задачи по трём критериям."""
 
@@ -38,7 +33,7 @@ class Rating(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    def __repr__(self) -> str:  # pragma: no cover
+    def __repr__(self) -> str:
         return (
             f"<Rating {self.id}: user={self.user_id} task={self.task_id} "
             f"{self.timeliness_score}/{self.completeness_score}/{self.quality_score}>"

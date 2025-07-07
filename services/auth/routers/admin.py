@@ -45,10 +45,9 @@ async def change_user_role(
     return UserOut.model_validate(user)
 
 
-# ---------------------------------------------------------------------------
 # Добавление / удаление пользователя в команду (company)
 # Только администратор своей команды или superadmin
-# ---------------------------------------------------------------------------
+
 
 
 @router.put("/users/{user_id}/team/{team_id}", response_model=UserOut)

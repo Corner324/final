@@ -22,7 +22,6 @@ class Task(Base):
     status: Mapped[TaskStatus] = mapped_column(
         Enum(TaskStatus), default=TaskStatus.todo, nullable=False
     )
-    # Храним дату со встроенной таймзоной, чтобы без ошибок вставлять ISO8601 значения
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     assignee_id: Mapped[int] = mapped_column(Integer, nullable=False)
     creator_id: Mapped[int] = mapped_column(Integer, nullable=False)

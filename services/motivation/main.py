@@ -6,8 +6,10 @@ from routers import motivation
 
 rabbit_router = RabbitRouter(os.getenv("RABBIT_URL"))
 
+
 def broker():
     return router.broker
+
 
 app = FastAPI()
 app.include_router(motivation.router)

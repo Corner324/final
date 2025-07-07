@@ -9,9 +9,8 @@ from models import Rating
 from schemas import RatingCreate, AverageScores
 
 
-# ---------------------------------------------------------------------------
 # CRUD
-# ---------------------------------------------------------------------------
+
 
 
 async def create_rating(db: AsyncSession, data: RatingCreate) -> Rating:

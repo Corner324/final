@@ -42,9 +42,8 @@ class TaskOut(TaskBase):
         from_attributes = True
 
 
-# ---------------------------------------------------------------------------
 # Comments
-# ---------------------------------------------------------------------------
+
 
 
 class TaskCommentCreate(BaseModel):

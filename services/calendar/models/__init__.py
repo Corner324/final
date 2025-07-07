@@ -12,7 +12,7 @@ class CalendarEvent(Base):
     start_time = Column(DateTime(timezone=True), nullable=False)
     end_time = Column(DateTime(timezone=True), nullable=False)
     owner_id = Column(Integer, nullable=False)
-    is_team_event = Column(Integer, default=0, nullable=False)  # 0/1 bool
+    is_team_event = Column(Integer, default=0, nullable=False)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

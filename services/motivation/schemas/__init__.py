@@ -17,9 +17,8 @@ class MotivationRead(MotivationBase):
     created_at: datetime
 
 
-# ---------------------------------------------------------------------------
 # Rating schemas
-# ---------------------------------------------------------------------------
+
 
 
 class RatingBase(BaseModel):

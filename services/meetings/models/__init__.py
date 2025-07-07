@@ -11,18 +11,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 
 
-# ---------------------------------------------------------------------------
-# Declarative base for the meetings service
-# ---------------------------------------------------------------------------
-
 Base = declarative_base()
 
-
-# ---------------------------------------------------------------------------
-# Association table «meeting_participants» many-to-many: meeting ↔ user
-# Мы не пользуемся внешним ключом на таблицу пользователей
-# других микросервисов, поэтому FK ссылается только на «meetings».
-# ---------------------------------------------------------------------------
 
 meeting_participants: Table = Table(
     "meeting_participants",
@@ -37,22 +27,12 @@ meeting_participants: Table = Table(
 )
 
 
-# ---------------------------------------------------------------------------
-# Модель-обёртка строки связи
-# ---------------------------------------------------------------------------
-
-
 class MeetingParticipant(Base):
     """association row meeting_id/user_id"""
 
     __table__ = meeting_participants
 
     meeting: Mapped["Meeting"] = relationship("Meeting", back_populates="participants")
-
-
-# ---------------------------------------------------------------------------
-# Базовая таблица «meetings»
-# ---------------------------------------------------------------------------
 
 
 class Meeting(Base):

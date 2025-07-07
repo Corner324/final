@@ -12,9 +12,8 @@ from passlib.context import CryptContext
 
 from models import Base, Team, User
 
-# ---------------------------------------------------------------------------
 # Конфигурация БД
-# ---------------------------------------------------------------------------
+
 
 DATABASE_URL: str = os.getenv(
     "ADMIN_DATABASE_URL",

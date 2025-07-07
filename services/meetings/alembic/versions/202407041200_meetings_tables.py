@@ -1,7 +1,7 @@
 """create meetings tables
 
 Revision ID: 202407041200
-Revises: 
+Revises:
 Create Date: 2024-07-04 12:00:00.000000
 """
 

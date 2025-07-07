@@ -38,9 +38,8 @@ async def get_task_by_id(task_id: int, db: AsyncSession = Depends(get_db)):
     return task
 
 
-# ---------------------------------------------------------------------------
 # Change status (simplified endpoint)
-# ---------------------------------------------------------------------------
+
 
 
 class StatusIn(BaseModel):

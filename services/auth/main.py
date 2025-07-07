@@ -27,9 +27,8 @@ app = FastAPI(title="Auth Service", version="0.1.0")
 app.add_middleware(LoggingMiddleware)
 
 
-# ---------------------------------------------------------------------------
 # Global error handlers
-# ---------------------------------------------------------------------------
+
 
 
 @app.exception_handler(IntegrityError)
