@@ -5,6 +5,7 @@ from typing import List
 
 from sqlalchemy import select, delete, and_, exists, or_, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from models import Meeting, meeting_participants
 from schemas import MeetingCreate, MeetingUpdate
@@ -94,17 +95,29 @@ async def create_meeting(db: AsyncSession, data: MeetingCreate) -> Meeting:
     )
 
     await db.commit()
-    await db.refresh(meeting)
+
+    # Повторно загружаем объект вместе с участниками одним запросом
+    meeting = await db.get(
+        Meeting, meeting.id, options=(selectinload(Meeting.participants),)
+    )
     return meeting
 
 
 async def get_meeting(db: AsyncSession, meeting_id: int) -> Meeting | None:
-    res = await db.execute(select(Meeting).where(Meeting.id == meeting_id))
+    res = await db.execute(
+        select(Meeting)
+        .options(selectinload(Meeting.participants))
+        .where(Meeting.id == meeting_id)
+    )
     return res.scalar_one_or_none()
 
 
 async def get_meetings(db: AsyncSession, team_id: int | None = None) -> list[Meeting]:
-    stmt = select(Meeting).order_by(Meeting.start_time.desc())
+    stmt = (
+        select(Meeting)
+        .options(selectinload(Meeting.participants))
+        .order_by(Meeting.start_time.desc())
+    )
     if team_id is not None:
         stmt = stmt.where(Meeting.team_id == team_id)
     res = await db.execute(stmt)

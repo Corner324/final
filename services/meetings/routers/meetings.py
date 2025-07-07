@@ -15,6 +15,28 @@ from crud import (
 from schemas import MeetingCreate, MeetingUpdate, MeetingOut  # type: ignore
 
 
+# ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
+
+
+def _to_out(meeting) -> MeetingOut:
+    """Convert ORM Meeting to MeetingOut with participants ids list."""
+    return MeetingOut.model_validate(
+        {
+            "id": meeting.id,
+            "title": meeting.title,
+            "description": meeting.description,
+            "start_time": meeting.start_time,
+            "end_time": meeting.end_time,
+            "team_id": meeting.team_id,
+            "organizer_id": meeting.organizer_id,
+            "created_at": meeting.created_at,
+            "participants": [p.user_id for p in meeting.participants],
+        }
+    )
+
+
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
 
@@ -29,13 +51,16 @@ async def create(data: MeetingCreate, db: AsyncSession = Depends(get_db)):
         meeting = await create_meeting(db, data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return meeting
+
+    # гарантируем, что participants загружены, чтобы избежать MissingGreenlet
+    await db.refresh(meeting, attribute_names=["participants"])
+    return _to_out(meeting)
 
 
 @router.get("/", response_model=List[MeetingOut])
 async def list_meetings(team_id: int | None = None, db: AsyncSession = Depends(get_db)):
     meetings = await get_meetings(db, team_id)
-    return meetings
+    return [_to_out(m) for m in meetings]
 
 
 @router.get("/{meeting_id}", response_model=MeetingOut)
@@ -43,7 +68,7 @@ async def get_by_id(meeting_id: int, db: AsyncSession = Depends(get_db)):
     meeting = await get_meeting(db, meeting_id)
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
-    return meeting
+    return _to_out(meeting)
 
 
 @router.patch("/{meeting_id}", response_model=MeetingOut)
@@ -59,7 +84,7 @@ async def update_by_id(
         meeting = await update_meeting(db, meeting, data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return meeting
+    return _to_out(meeting)
 
 
 @router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)

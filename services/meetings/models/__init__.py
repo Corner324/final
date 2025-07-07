@@ -38,6 +38,19 @@ meeting_participants: Table = Table(
 
 
 # ---------------------------------------------------------------------------
+# Модель-обёртка строки связи
+# ---------------------------------------------------------------------------
+
+
+class MeetingParticipant(Base):
+    """association row meeting_id/user_id"""
+
+    __table__ = meeting_participants
+
+    meeting: Mapped["Meeting"] = relationship("Meeting", back_populates="participants")
+
+
+# ---------------------------------------------------------------------------
 # Базовая таблица «meetings»
 # ---------------------------------------------------------------------------
 
@@ -60,17 +73,9 @@ class Meeting(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    participants: Mapped[list[int]] = relationship(
+    participants: Mapped[list[MeetingParticipant]] = relationship(
         "MeetingParticipant",
-        secondary=meeting_participants,
-        primaryjoin=id == meeting_participants.c.meeting_id,
-        secondaryjoin=meeting_participants.c.user_id,
-        viewonly=True,
+        back_populates="meeting",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
-
-
-# Шаблонная модель-обёртка для relationship, чтобы pydantic могла сериализовать list[int]
-class MeetingParticipant(Base):
-    """Простая обёртка над таблицей связи без переопределения колонок."""
-
-    __table__ = meeting_participants
