@@ -16,6 +16,8 @@ from models.team import Base
 
 # Явно указываем script_location для Alembic
 context.config.set_main_option("script_location", os.path.dirname(__file__))
+# добавил импорт моделей для Alembic
+from models import user, news  # noqa: F401
 
 ASYNC_DATABASE_URL = os.environ.get("DATABASE_URL")
 if not ASYNC_DATABASE_URL:

@@ -8,10 +8,8 @@ from sqlalchemy import (
     func,
     Boolean,
 )
-from sqlalchemy.orm import declarative_base
 import enum
-
-Base = declarative_base()
+from .team import Base
 
 
 class UserStatus(str, enum.Enum):

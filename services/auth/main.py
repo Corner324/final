@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from starlette.middleware.cors import CORSMiddleware
@@ -8,12 +8,23 @@ from routers import admin
 from models.user import User
 from sqlalchemy.exc import IntegrityError
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=False, future=True)
 
+
+class LoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        logger.info(f">> {request.method} {request.url.path}")
+        response = await call_next(request)
+        logger.info(f"<< {response.status_code} {request.url.path}")
+        return response
+
+
 app = FastAPI(title="Auth Service", version="0.1.0")
+app.add_middleware(LoggingMiddleware)
 
 
 # ---------------------------------------------------------------------------

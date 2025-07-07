@@ -17,6 +17,7 @@
    python-dotenv = "^1.0.1"
    psycopg2-binary = "^2.9.9"
    faststream = {extras = ["rabbit"], version = "^0.5.43"}
+   loguru = "^0.7.3"
 
    [build-system]
    requires = ["poetry-core"]
