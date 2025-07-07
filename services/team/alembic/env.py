@@ -5,24 +5,21 @@ from sqlalchemy import pool, create_engine
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
-# Автоматически подгружаем переменные из .env
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-# Добавляем корень микросервиса в PYTHONPATH для корректного импорта models
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from models.team import Base
 
-# Явно указываем script_location для Alembic
+
 context.config.set_main_option("script_location", os.path.dirname(__file__))
-# добавил импорт моделей для Alembic
 from models import user, news  # noqa: F401
 
 ASYNC_DATABASE_URL = os.environ.get("DATABASE_URL")
 if not ASYNC_DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set in environment variables!")
-# Для миграций используем sync-URL
+
 SYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("+asyncpg", "+psycopg2")
 
 config = context.config

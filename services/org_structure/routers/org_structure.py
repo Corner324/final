@@ -27,6 +27,32 @@ from schemas.org_structure import (
     OrgMemberUpdate,
 )
 from typing import List
+from schemas.org_structure import OrgMemberTree
+from models.org_structure import OrgMember
+
+
+def _build_tree(members: list[OrgMember]) -> list[OrgMemberTree]:
+    """Преобразуем плоский список ORM-объектов в дерево OrgMemberTree."""
+    id_map: dict[int, OrgMemberTree] = {}
+    roots: list[OrgMemberTree] = []
+
+    for m in members:
+        id_map[m.id] = OrgMemberTree(
+            id=m.id,
+            user_id=m.user_id,
+            position_id=m.position_id,
+            manager_id=m.manager_id,
+            team_id=m.team_id,
+            children=[],
+        )
+
+    for node in id_map.values():
+        if node.manager_id and node.manager_id in id_map:
+            id_map[node.manager_id].children.append(node)
+        else:
+            roots.append(node)
+    return roots
+
 
 router = APIRouter(prefix="/org-structure", tags=["org_structure"])
 
@@ -142,3 +168,12 @@ async def remove_member(member_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/members", response_model=List[OrgMemberOut])
 async def list_members(team_id: int, db: AsyncSession = Depends(get_db)):
     return await get_org_members(db, team_id)
+
+
+# Новый эндпоинт с иерархией
+
+
+@router.get("/members/hierarchy", response_model=list[OrgMemberTree])
+async def hierarchy(team_id: int, db: AsyncSession = Depends(get_db)):
+    members = await get_org_members(db, team_id)
+    return _build_tree(members)

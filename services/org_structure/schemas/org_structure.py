@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel
 from typing import Optional
 
@@ -58,6 +60,13 @@ class OrgMemberOut(OrgMemberBase):
 
     class Config:
         from_attributes = True
+
+
+# Рекурсивное представление с подчинёнными
+
+
+class OrgMemberTree(OrgMemberOut):
+    children: list["OrgMemberTree"] = []
 
 
 class OrgMemberUpdate(BaseModel):

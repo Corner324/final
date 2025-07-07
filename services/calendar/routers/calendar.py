@@ -21,6 +21,54 @@ async def create(data: CalendarEventCreate, db: AsyncSession = Depends(get_db)):
     return await create_event(db, data)
 
 
+# ---------------------------------------------------------------------------
+# Slots for a day
+# ---------------------------------------------------------------------------
+
+
+@router.get("/slots", response_model=list[CalendarEventRead])
+async def day_slots(user_id: int, date: datetime, db: AsyncSession = Depends(get_db)):
+    start = datetime(date.year, date.month, date.day, 0, 0, 0, tzinfo=date.tzinfo)
+    end = start.replace(hour=23, minute=59, second=59)
+    stmt = (
+        select(CalendarEvent)
+        .where(
+            ((CalendarEvent.owner_id == user_id) | (CalendarEvent.is_team_event == 1))
+        )
+        .where(CalendarEvent.start_time.between(start, end))
+    )
+    res = await db.execute(stmt)
+    return res.scalars().all()
+
+
+# ---------------------------------------------------------------------------
+# Month events
+# ---------------------------------------------------------------------------
+
+
+@router.get("/month", response_model=list[CalendarEventRead])
+async def month_events(
+    user_id: int, year: int, month: int, db: AsyncSession = Depends(get_db)
+):
+    from calendar import monthrange
+
+    import zoneinfo, datetime as dt
+
+    tz = zoneinfo.ZoneInfo("UTC")
+    start = dt.datetime(year, month, 1, 0, 0, 0, tzinfo=tz)
+    last_day = monthrange(year, month)[1]
+    end = dt.datetime(year, month, last_day, 23, 59, 59, tzinfo=tz)
+    stmt = (
+        select(CalendarEvent)
+        .where(
+            ((CalendarEvent.owner_id == user_id) | (CalendarEvent.is_team_event == 1))
+        )
+        .where(CalendarEvent.start_time.between(start, end))
+    )
+    res = await db.execute(stmt)
+    return res.scalars().all()
+
+
 @router.get("/{event_id}", response_model=CalendarEventRead)
 async def get(event_id: int, db: AsyncSession = Depends(get_db)):
     event = await get_event(db, event_id)
@@ -77,51 +125,3 @@ async def check_availability(data: AvailabilityIn, db: AsyncSession = Depends(ge
     res = await db.execute(stmt)
     busy = res.first() is not None
     return {"available": not busy}
-
-
-# ---------------------------------------------------------------------------
-# Slots for a day
-# ---------------------------------------------------------------------------
-
-
-@router.get("/slots", response_model=list[CalendarEventRead])
-async def day_slots(user_id: int, date: datetime, db: AsyncSession = Depends(get_db)):
-    start = datetime(date.year, date.month, date.day, 0, 0, 0, tzinfo=date.tzinfo)
-    end = start.replace(hour=23, minute=59, second=59)
-    stmt = (
-        select(CalendarEvent)
-        .where(
-            ((CalendarEvent.owner_id == user_id) | (CalendarEvent.is_team_event == 1))
-        )
-        .where(CalendarEvent.start_time.between(start, end))
-    )
-    res = await db.execute(stmt)
-    return res.scalars().all()
-
-
-# ---------------------------------------------------------------------------
-# Month events
-# ---------------------------------------------------------------------------
-
-
-@router.get("/month", response_model=list[CalendarEventRead])
-async def month_events(
-    user_id: int, year: int, month: int, db: AsyncSession = Depends(get_db)
-):
-    from calendar import monthrange
-
-    import zoneinfo, datetime as dt
-
-    tz = zoneinfo.ZoneInfo("UTC")
-    start = dt.datetime(year, month, 1, 0, 0, 0, tzinfo=tz)
-    last_day = monthrange(year, month)[1]
-    end = dt.datetime(year, month, last_day, 23, 59, 59, tzinfo=tz)
-    stmt = (
-        select(CalendarEvent)
-        .where(
-            ((CalendarEvent.owner_id == user_id) | (CalendarEvent.is_team_event == 1))
-        )
-        .where(CalendarEvent.start_time.between(start, end))
-    )
-    res = await db.execute(stmt)
-    return res.scalars().all()
