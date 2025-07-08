@@ -40,7 +40,6 @@ class Team(Base):
     code: str = Column(String(32), unique=True, nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Связь один-ко-многим с пользователями (опционально)
     users = relationship("User", back_populates="team", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:  # pragma: no cover

@@ -17,10 +17,6 @@ class MotivationRead(MotivationBase):
     created_at: datetime
 
 
-# Rating schemas
-
-
-
 class RatingBase(BaseModel):
     user_id: int
     task_id: int
@@ -41,11 +37,6 @@ class RatingRead(RatingBase):
 
     class Config:
         from_attributes = True
-
-
-# ---------------------------------------------------------------------------
-# Matrix / Average responses
-# ---------------------------------------------------------------------------
 
 
 class AverageScores(BaseModel):

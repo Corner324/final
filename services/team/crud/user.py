@@ -10,7 +10,6 @@ import hashlib
 
 
 def hash_password(password: str) -> str:
-    # В реальном проекте использовать bcrypt/argon2
     return hashlib.sha256(password.encode()).hexdigest()
 
 

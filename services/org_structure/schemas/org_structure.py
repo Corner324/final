@@ -62,9 +62,6 @@ class OrgMemberOut(OrgMemberBase):
         from_attributes = True
 
 
-# Рекурсивное представление с подчинёнными
-
-
 class OrgMemberTree(OrgMemberOut):
     children: list["OrgMemberTree"] = []
 

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
 from functools import lru_cache
-import os
+
 
 
 class Settings(BaseSettings):

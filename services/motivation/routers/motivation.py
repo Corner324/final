@@ -24,10 +24,6 @@ from schemas import (
 router = APIRouter(prefix="/motivation", tags=["motivation"])
 
 
-# Ratings CRUD
-
-
-
 @router.post("/ratings", response_model=RatingRead, status_code=status.HTTP_201_CREATED)
 async def add_rating(data: RatingCreate, db: AsyncSession = Depends(get_db)):
     return await create_rating(db, data)

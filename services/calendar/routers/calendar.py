@@ -21,9 +21,6 @@ async def create(data: CalendarEventCreate, db: AsyncSession = Depends(get_db)):
     return await create_event(db, data)
 
 
-# Slots for a day
-
-
 
 @router.get("/slots", response_model=list[CalendarEventRead])
 async def day_slots(user_id: int, date: datetime, db: AsyncSession = Depends(get_db)):
@@ -39,10 +36,6 @@ async def day_slots(user_id: int, date: datetime, db: AsyncSession = Depends(get
     res = await db.execute(stmt)
     return res.scalars().all()
 
-
-# ---------------------------------------------------------------------------
-# Month events
-# ---------------------------------------------------------------------------
 
 
 @router.get("/month", response_model=list[CalendarEventRead])
@@ -83,10 +76,6 @@ async def delete(event_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Event not found")
     await delete_event(db, event_id)
 
-
-# ---------------------------------------------------------------------------
-# Availability: проверка, есть ли пересечение хоть с одним событием
-# ---------------------------------------------------------------------------
 
 
 class AvailabilityIn(BaseModel):

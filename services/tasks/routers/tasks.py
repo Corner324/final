@@ -38,10 +38,6 @@ async def get_task_by_id(task_id: int, db: AsyncSession = Depends(get_db)):
     return task
 
 
-# Change status (simplified endpoint)
-
-
-
 class StatusIn(BaseModel):
     status: TaskStatus
 
@@ -56,11 +52,6 @@ async def change_status(
     return task
 
 
-# ---------------------------------------------------------------------------
-# Comments
-# ---------------------------------------------------------------------------
-
-
 @router.post(
     "/{task_id}/comments",
     response_model=TaskCommentOut,
@@ -69,7 +60,6 @@ async def change_status(
 async def create_comment(
     task_id: int, data: TaskCommentCreate, db: AsyncSession = Depends(get_db)
 ):
-    # ensure task exists
     task = await get_task(db, task_id)
     if not task:
         raise HTTPException(404, detail="Task not found")

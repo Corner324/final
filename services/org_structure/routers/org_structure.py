@@ -71,7 +71,6 @@ async def edit_department(
         if hasattr(data, "team_id")
         else None
     )
-    # fetch object
     from models.org_structure import Department
 
     dept = None
@@ -168,9 +167,6 @@ async def remove_member(member_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/members", response_model=List[OrgMemberOut])
 async def list_members(team_id: int, db: AsyncSession = Depends(get_db)):
     return await get_org_members(db, team_id)
-
-
-# Новый эндпоинт с иерархией
 
 
 @router.get("/members/hierarchy", response_model=list[OrgMemberTree])

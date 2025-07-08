@@ -31,11 +31,10 @@ async def _is_manager_of(creator_id: int, assignee_id: int, team_id: int) -> boo
                 manager_id = mgr.get("manager_id")
     except httpx.HTTPError:
         return True
-    return creator_id == assignee_id  # self-assign or fallback
+    return creator_id == assignee_id
 
 
 async def create_task(db: AsyncSession, data: TaskCreate) -> Task:
-    # role check: creator must be manager of assignee
     if not await _is_manager_of(data.creator_id, data.assignee_id, data.team_id):
         raise ValueError("Creator is not manager of assignee")
 

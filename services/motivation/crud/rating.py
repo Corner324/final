@@ -9,9 +9,6 @@ from models import Rating
 from schemas import RatingCreate, AverageScores
 
 
-# CRUD
-
-
 
 async def create_rating(db: AsyncSession, data: RatingCreate) -> Rating:
     obj = Rating(**data.model_dump())
@@ -30,10 +27,6 @@ async def get_team_ratings(db: AsyncSession, team_id: int) -> list[Rating]:
     res = await db.execute(select(Rating).where(Rating.team_id == team_id))
     return res.scalars().all()
 
-
-# ---------------------------------------------------------------------------
-# Aggregations
-# ---------------------------------------------------------------------------
 
 
 def _row_to_avg(row) -> AverageScores:

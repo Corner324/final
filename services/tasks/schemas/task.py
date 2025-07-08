@@ -42,10 +42,6 @@ class TaskOut(TaskBase):
         from_attributes = True
 
 
-# Comments
-
-
-
 class TaskCommentCreate(BaseModel):
     text: str
     author_id: int

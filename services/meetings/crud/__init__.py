@@ -11,9 +11,6 @@ from models import Meeting, meeting_participants
 from schemas import MeetingCreate, MeetingUpdate
 
 
-# Вспомогательные функции
-
-
 
 async def _has_time_conflict(
     db: AsyncSession,
@@ -48,13 +45,7 @@ async def _has_time_conflict(
     return conflict
 
 
-# ---------------------------------------------------------------------------
-# CRUD-операции
-# ---------------------------------------------------------------------------
-
-
 async def create_meeting(db: AsyncSession, data: MeetingCreate) -> Meeting:
-    # 1) Проверяем внешний календарный сервис: если слот занят глобальным событием
     import httpx
 
     try:
@@ -73,7 +64,6 @@ async def create_meeting(db: AsyncSession, data: MeetingCreate) -> Meeting:
         # Если календарь недоступен, продолжаем, полагаясь на локальную проверку
         pass
 
-    # 2) Проверяем пересечения с другими встречами внутри сервиса
     if await _has_time_conflict(
         db, data.participants + [data.organizer_id], data.start_time, data.end_time
     ):
@@ -84,9 +74,8 @@ async def create_meeting(db: AsyncSession, data: MeetingCreate) -> Meeting:
 
     meeting = Meeting(**meeting_dict)
     db.add(meeting)
-    await db.flush()  # получаем meeting.id без коммита
+    await db.flush()
 
-    # Вставляем участников (организатора добавляем автоматически)
     all_participants = list(set(participants + [data.organizer_id]))
     await db.execute(
         insert(meeting_participants),
@@ -95,7 +84,6 @@ async def create_meeting(db: AsyncSession, data: MeetingCreate) -> Meeting:
 
     await db.commit()
 
-    # Повторно загружаем объект вместе с участниками одним запросом
     meeting = await db.get(
         Meeting, meeting.id, options=(selectinload(Meeting.participants),)
     )
@@ -145,7 +133,6 @@ async def update_meeting(
             db, new_participants, new_start, new_end, exclude_meeting_id=meeting.id
         ):
             raise ValueError("Время занято у одного из участников")
-        # Также проверяем календарный сервис
         import httpx
 
         try:
@@ -166,7 +153,6 @@ async def update_meeting(
     for k, v in payload.items():
         setattr(meeting, k, v)
 
-    # Обновляем участников
     if data.participants is not None:
         await db.execute(
             delete(meeting_participants).where(
