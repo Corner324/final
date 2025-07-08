@@ -21,7 +21,18 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-app = FastAPI()
+async def lifespan(app: FastAPI):
+    logger.info("Team service startup")
+    app.state.user_consumer_task = asyncio.create_task(_consume_user_events())
+    yield
+    task: asyncio.Task = app.state.user_consumer_task
+    task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await task
+    logger.info("Team service shutdown")
+
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(LoggingMiddleware)
 
 
@@ -106,18 +117,3 @@ async def _consume_user_events():
                 logger.info(f"Received event: {data.get('event')}")
                 if data.get("event") == "created":
                     await _sync_user(data["payload"])
-
-
-@app.on_event("startup")
-async def _start_consumer():
-    logger.info("Team service startup")
-    app.state.user_consumer_task = asyncio.create_task(_consume_user_events())
-
-
-@app.on_event("shutdown")
-async def _stop_consumer():
-    task: asyncio.Task = app.state.user_consumer_task  # type: ignore[attr-defined]
-    task.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await task
-    logger.info("Team service shutdown")

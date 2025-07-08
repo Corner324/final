@@ -23,16 +23,19 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-app = FastAPI(title="Auth Service", version="0.1.0")
+async def lifespan(app: FastAPI):
+    logger.info("Auth service started.")
+    yield
+    await engine.dispose()
+    logger.info("Auth service stopped.")
+
+
+app = FastAPI(title="Auth Service", version="0.1.0", lifespan=lifespan)
 app.add_middleware(LoggingMiddleware)
 
 
-# Global error handlers
-
-
-
 @app.exception_handler(IntegrityError)
-async def integrity_error_handler(request, exc):  # type: ignore[override]
+async def integrity_error_handler(request, exc):
     """Возвращаем 400 при нарушении уникальных ограничений."""
 
     return JSONResponse(
@@ -54,15 +57,7 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 
 
-@app.on_event("startup")
-async def startup():
-    logger.info("Auth service started.")
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    await engine.dispose()
-    logger.info("Auth service stopped.")
+# Удалены устаревшие хендлеры @app.on_event, логика перенесена в lifespan
 
 
 @app.get("/health", tags=["health"])
