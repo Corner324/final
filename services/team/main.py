@@ -48,15 +48,8 @@ for router in routers:
     app.include_router(router)
 
 
-# Заглушка для запуска
-@app.get("/")
-def root():
-    return {"msg": "team service"}
-
 
 # --- RabbitMQ consumer для синхронизации пользователей ---
-
-
 async def _sync_user(payload: dict):
     """Создать или обновить пользователя в локальной БД team."""
     # Приведение значений к Enumам team

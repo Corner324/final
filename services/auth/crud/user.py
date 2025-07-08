@@ -67,7 +67,7 @@ async def admin_update_user_fields(
         user.status = status
     if role is not None:
         user.role = role
-    if team_id is not None or team_id is None:
+    if team_id is not None:
         user.team_id = team_id
     await db.commit()
     await db.refresh(user)

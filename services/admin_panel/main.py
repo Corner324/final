@@ -12,42 +12,28 @@ from passlib.context import CryptContext
 
 from models import Base, Team, User
 
-# Конфигурация БД
 
-
-DATABASE_URL: str = os.getenv(
-    "ADMIN_DATABASE_URL",
-    # По умолчанию используем SQLite для упрощённого локального запуска
-    "sqlite:///./admin_panel.db",
-)
+DATABASE_URL: str | None = os.getenv("ADMIN_DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("ADMIN_DATABASE_URL environment variable must be set")
 
 engine = create_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-
-# Создаём таблицы, если их ещё нет
-Base.metadata.create_all(bind=engine)
-
-# ---------------------------------------------------------------------------
-# Basic HTTP Auth для входа в админ-панель
-# ---------------------------------------------------------------------------
 
 
 class BasicAuthBackend(AuthenticationBackend):
     """Простейшая Basic-auth аутентификация."""
 
     def __init__(self) -> None:
-        # SQLAdmin требует секрет для подписи cookie сессии
         secret = os.getenv("ADMIN_SECRET_KEY", "change-me-please")
         super().__init__(secret_key=secret)
 
     async def authenticate(self, request: Request):  # type: ignore[override]
         import base64, os
 
-        # 1. Проверяем сессию (устанавливается методом login)
         if user := request.session.get("user"):
             return AuthCredentials(["authenticated"]), SimpleUser(user)
 
-        # 2. Fallback: Basic-Auth заголовок (подходит для API-клиентов)
         auth_header = request.headers.get("Authorization")
         if not auth_header:
             return None
@@ -85,10 +71,6 @@ class BasicAuthBackend(AuthenticationBackend):
         return True
 
 
-# ---------------------------------------------------------------------------
-# Приложение FastAPI + SQLAdmin
-# ---------------------------------------------------------------------------
-
 app = FastAPI(title="Admin Panel Service")
 admin = Admin(
     app,
@@ -107,7 +89,6 @@ def _hash_password(password: str) -> str:
 
 
 class TeamAdmin(ModelView, model=Team):
-    # Отображаемые колонки
     column_list = [Team.id, Team.name, Team.code, Team.created_at]
     page_size = 50
     name = "Team"
@@ -121,11 +102,10 @@ class UserAdmin(ModelView, model=User):
         User.full_name,
         User.role,
         User.status,
-        User.team,  # показываем связанную команду
+        User.team,
         User.created_at,
     ]
 
-    # Exclude hashed password but показываем team
     form_excluded_columns = [
         "hashed_password",
         "created_at",
@@ -136,7 +116,6 @@ class UserAdmin(ModelView, model=User):
         """Создает форму с дополнительным полем пароля."""
         form_class = await super().scaffold_form()
 
-        # Добавляем поле пароля
         form_class.password = PasswordField("Password")
 
         return form_class
@@ -148,40 +127,30 @@ class UserAdmin(ModelView, model=User):
     async def on_model_change(self, form, model, is_created, request):  # type: ignore[override]
         """Хэшируем пароль при создании/обновлении пользователя."""
 
-        # form - это словарь, а не объект WTForms!
         print(f"DEBUG: form type: {type(form)}")
         print(f"DEBUG: form content: {form}")
 
-        # Получаем пароль из словаря
         password: str | None = form.get("password") if isinstance(form, dict) else None
 
         print(f"DEBUG: extracted password: {password}")
         print(f"DEBUG: is_created: {is_created}")
 
-        # При создании пароль обязателен
         if is_created:
             if not password:
                 raise ValueError("Пароль обязателен при создании пользователя")
             model.hashed_password = _hash_password(password)
-            # Выставляем роль по-умолчанию
             if model.role is None:
                 model.role = "user"
         else:
-            # При редактировании пароль опционален
             if password:
                 model.hashed_password = _hash_password(password)
 
 
-# Регистрируем модели в админке
 admin.add_view(TeamAdmin)
 admin.add_view(UserAdmin)
 
 
-# ---------------------------------------------------------------------------
-# Health-check / заглушка для запуска
-# ---------------------------------------------------------------------------
-
-
+# Health-check
 @app.get("/")
 async def root() -> dict[str, str]:
     """Простое сообщение, подтверждающее работу сервиса."""
