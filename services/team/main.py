@@ -1,4 +1,4 @@
-import asyncio, json
+import json
 from fastapi import FastAPI, Request
 from sqlalchemy.exc import IntegrityError
 from fastapi.responses import JSONResponse
@@ -7,10 +7,9 @@ from core.config import get_settings
 from deps.db import SessionLocal
 from models.user import User, UserStatus, UserRole
 from sqlalchemy import select
-import aio_pika
-import contextlib
 from starlette.middleware.base import BaseHTTPMiddleware
 from loguru import logger
+from faststream.rabbit.fastapi import RabbitRouter
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -21,18 +20,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-async def lifespan(app: FastAPI):
-    logger.info("Team service startup")
-    app.state.user_consumer_task = asyncio.create_task(_consume_user_events())
-    yield
-    task: asyncio.Task = app.state.user_consumer_task
-    task.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await task
-    logger.info("Team service shutdown")
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 app.add_middleware(LoggingMiddleware)
 
 
@@ -48,11 +36,26 @@ for router in routers:
     app.include_router(router)
 
 
+settings = get_settings()
 
-# --- RabbitMQ consumer для синхронизации пользователей ---
+rabbit_router = RabbitRouter(settings.rabbit_url or "amqp://guest:guest@rabbitmq/")
+
+
+@rabbit_router.subscriber(
+    "user.events", queue="user.events.team", exchange_type="fanout"
+)
+async def handle_user_event(body: dict):
+    logger.info(f"Received event: {body.get('event')}")
+    if body.get("event") == "created":
+        await _sync_user(body["payload"])
+
+
+app.include_router(rabbit_router)
+
+
 async def _sync_user(payload: dict):
     """Создать или обновить пользователя в локальной БД team."""
-    # Приведение значений к Enumам team
+
     status = payload.get("status", "active")
     if status == "inactive":
         status = "active"
@@ -88,25 +91,3 @@ async def _sync_user(payload: dict):
         await db.commit()
         if user:
             logger.debug(f"User upsert completed id={user.id}")
-
-
-async def _consume_user_events():
-    settings = get_settings()
-    logger.info("Starting RabbitMQ consumer for user.events")
-    connection = await aio_pika.connect_robust(
-        settings.rabbit_url or "amqp://guest:guest@rabbitmq/"
-    )
-    channel = await connection.channel()
-    exchange = await channel.declare_exchange(
-        "user.events", aio_pika.ExchangeType.FANOUT, durable=True
-    )
-    queue = await channel.declare_queue("user.events.team", durable=True)
-    await queue.bind(exchange)
-
-    async with queue.iterator() as q_iter:
-        async for message in q_iter:
-            async with message.process():
-                data = json.loads(message.body)
-                logger.info(f"Received event: {data.get('event')}")
-                if data.get("event") == "created":
-                    await _sync_user(data["payload"])

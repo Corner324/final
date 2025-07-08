@@ -9,6 +9,7 @@ from models.user import User
 from sqlalchemy.exc import IntegrityError
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from core.rabbit import rabbit_router
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -55,9 +56,7 @@ app.add_middleware(
 app.include_router(user.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
-
-
-# Удалены устаревшие хендлеры @app.on_event, логика перенесена в lifespan
+app.include_router(rabbit_router)
 
 
 @app.get("/health", tags=["health"])
